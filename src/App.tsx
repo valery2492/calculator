@@ -80,7 +80,7 @@ export default function App() {
       </form>
       <aside className="history-card card"><div className="card-head"><div><span className="section-kicker">02 / YOUR ACTIVITY</span><h2>Recent history<span className="count">{history.length.toString().padStart(2,'0')}</span></h2></div><button className="refresh" onClick={()=>void loadHistory()} aria-label="Refresh history"><RefreshCw size={16}/></button></div>
         <div className="history-list">{history.length===0?<div className="empty"><span className="empty-icon"><History size={20}/></span><strong>Your story starts here.</strong><p>Run your first calculation and it will show up here.</p></div>:history.map((entry,i)=><div className="history-row" key={entry.id}><div className={`history-symbol ${entry.result<0?'negative':''}`}>{entry.result<0?<ArrowDownRight size={16}/>:<ArrowUpRight size={16}/>}</div><div className="history-main"><strong>{expression(entry)}</strong><span>{new Date(entry.createdAt).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span></div><b className="history-result">{pretty(entry.result)}</b></div>)}</div>
-        <div className="history-foot"><span className={storageReady?'db-status':'local-status'}><i/>{storageReady?'SUPABASE DATABASE':'LOCAL PREVIEW'}</span><span>{storageReady?'SYNCED':'API NOT CONNECTED'}</span></div>
+        <div className="history-foot"><span className={storageReady?'db-status':'local-status'}><i/>{storageReady?'SUPABASE DATABASE':'BROWSER STORAGE'}</span><span>{storageReady?'SYNCED':'API NOT CONNECTED'}</span></div>
       </aside>
     </section>
     <footer><span>BUILT WITH CARE BY VALERY</span><span>REACT <b>·</b> .NET 10 <b>·</b> SUPABASE</span></footer>

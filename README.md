@@ -2,6 +2,10 @@
 
 A responsive five-operation calculator built with React + TypeScript, an ASP.NET Core .NET 10 API, and a Supabase PostgreSQL history table. Saved calculations are scoped to the browser that created them.
 
+## Live site
+
+Try the calculator at <https://valery2492.github.io/calculator/>. Calculations work in the browser and history is saved in that browser. Database-backed history requires a hosted .NET API with the Supabase connection configured.
+
 ## Operations
 
 - Addition, subtraction, multiplication, division
