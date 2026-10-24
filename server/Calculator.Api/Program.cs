@@ -1,8 +1,9 @@
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("Supabase")
-    ?? Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION");
+var connectionString = builder.Configuration.GetConnectionString("Supabase");
+if (string.IsNullOrWhiteSpace(connectionString))
+    connectionString = Environment.GetEnvironmentVariable("SUPABASE_DB_CONNECTION");
 var allowedOrigin = builder.Configuration["FrontendOrigin"] ?? Environment.GetEnvironmentVariable("FRONTEND_ORIGIN") ?? "http://localhost:5173";
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.WithOrigins(allowedOrigin).AllowAnyHeader().AllowAnyMethod()));
 if (!string.IsNullOrWhiteSpace(connectionString))
