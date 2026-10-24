@@ -24,4 +24,3 @@ The Vite preview works without the API and saves a temporary history in browser 
 - `FRONTEND_ORIGIN`: allowed browser origin for API CORS.
 
 The database credential belongs only on the API host. Do not put it in React environment variables or commit it.
-
