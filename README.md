@@ -1,6 +1,6 @@
 # Valery's Calculator
 
-A responsive five-operation calculator built with React + TypeScript, an ASP.NET Core .NET 10 API, and a Supabase PostgreSQL history table.
+A responsive five-operation calculator built with React + TypeScript, an ASP.NET Core .NET 10 API, and a Supabase PostgreSQL history table. Saved calculations are scoped to the browser that created them.
 
 ## Operations
 

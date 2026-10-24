@@ -1,5 +1,6 @@
 create table if not exists public.calculation_history (
   id uuid primary key default gen_random_uuid(),
+  client_id uuid not null,
   left_value double precision not null,
   operation text not null check (operation in ('add', 'subtract', 'multiply', 'divide', 'percentage')),
   right_value double precision not null,
@@ -8,7 +9,7 @@ create table if not exists public.calculation_history (
 );
 
 create index if not exists calculation_history_created_at_idx
-  on public.calculation_history (created_at desc);
+  on public.calculation_history (client_id, created_at desc);
 
 alter table public.calculation_history enable row level security;
 -- Access is through the .NET API using a server-only database connection string.

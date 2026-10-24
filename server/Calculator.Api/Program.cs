@@ -16,6 +16,8 @@ app.MapPost("/api/calculations", async (CalculationRequest request, IServiceProv
 {
     if (!double.IsFinite(request.Left) || !double.IsFinite(request.Right))
         return Results.BadRequest(new { message = "Both values must be finite numbers." });
+    if (request.ClientId == Guid.Empty)
+        return Results.BadRequest(new { message = "A valid browser history ID is required." });
 
     var operation = request.Operation.Trim().ToLowerInvariant();
     double result = operation switch
@@ -31,16 +33,17 @@ app.MapPost("/api/calculations", async (CalculationRequest request, IServiceProv
     if (operation is not ("add" or "subtract" or "multiply" or "divide" or "percentage"))
         return Results.BadRequest(new { message = "Choose add, subtract, multiply, divide, or percentage." });
     if (!double.IsFinite(result))
-        return Results.BadRequest(new { message = "Division by zero is not allowed." });
+        return Results.BadRequest(new { message = operation == "divide" ? "Division by zero is not allowed." : "The result is outside the calculator's supported range." });
 
     if (services.GetService<NpgsqlDataSource>() is not { } dataSource)
         return Results.Problem("Database is not configured. Set SUPABASE_DB_CONNECTION on the API server.", statusCode: StatusCodes.Status503ServiceUnavailable);
 
     await using var command = dataSource.CreateCommand("""
-        INSERT INTO public.calculation_history (left_value, operation, right_value, result)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO public.calculation_history (client_id, left_value, operation, right_value, result)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id, left_value, operation, right_value, result, created_at;
         """);
+    command.Parameters.AddWithValue(request.ClientId);
     command.Parameters.AddWithValue(request.Left);
     command.Parameters.AddWithValue(operation);
     command.Parameters.AddWithValue(request.Right);
@@ -50,16 +53,20 @@ app.MapPost("/api/calculations", async (CalculationRequest request, IServiceProv
     return Results.Ok(new CalculationEntry(reader.GetGuid(0), reader.GetDouble(1), reader.GetString(2), reader.GetDouble(3), reader.GetDouble(4), reader.GetDateTime(5)));
 });
 
-app.MapGet("/api/calculations", async (int? limit, IServiceProvider services, CancellationToken cancellationToken) =>
+app.MapGet("/api/calculations", async (int? limit, Guid clientId, IServiceProvider services, CancellationToken cancellationToken) =>
 {
+    if (clientId == Guid.Empty)
+        return Results.BadRequest(new { message = "A valid browser history ID is required." });
     if (services.GetService<NpgsqlDataSource>() is not { } dataSource)
         return Results.Problem("Database is not configured. Set SUPABASE_DB_CONNECTION on the API server.", statusCode: StatusCodes.Status503ServiceUnavailable);
     await using var command = dataSource.CreateCommand("""
         SELECT id, left_value, operation, right_value, result, created_at
         FROM public.calculation_history
+        WHERE client_id = $1
         ORDER BY created_at DESC
-        LIMIT $1;
+        LIMIT $2;
         """);
+    command.Parameters.AddWithValue(clientId);
     command.Parameters.AddWithValue(Math.Clamp(limit ?? 8, 1, 100));
     await using var reader = await command.ExecuteReaderAsync(cancellationToken);
     var entries = new List<CalculationEntry>();
@@ -70,5 +77,5 @@ app.MapGet("/api/calculations", async (int? limit, IServiceProvider services, Ca
 
 app.Run();
 
-record CalculationRequest(double Left, double Right, string Operation);
+record CalculationRequest(double Left, double Right, string Operation, Guid ClientId);
 record CalculationEntry(Guid Id, double Left, string Operation, double Right, double Result, DateTime CreatedAt);

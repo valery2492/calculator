@@ -4,6 +4,14 @@ import { ArrowDownRight, ArrowUpRight, Divide, History, Minus, Plus, RefreshCw, 
 type Operation = 'add' | 'subtract' | 'multiply' | 'divide' | 'percentage'
 type Entry = { id: string; left: number; right: number; operation: Operation; result: number; createdAt: string }
 const api = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? ''
+const clientId = (() => {
+  const key = 'calculator-client-id'
+  const current = localStorage.getItem(key)
+  if (current) return current
+  const created = crypto.randomUUID()
+  localStorage.setItem(key, created)
+  return created
+})()
 const operators: { id: Operation; label: string; short: string; icon: typeof Plus }[] = [
   { id: 'add', label: 'Addition', short: '+', icon: Plus },
   { id: 'subtract', label: 'Subtraction', short: '−', icon: Minus },
@@ -26,7 +34,7 @@ export default function App() {
 
   async function loadHistory() {
     try {
-      const response = await fetch(`${api}/api/calculations?limit=8`)
+      const response = await fetch(`${api}/api/calculations?limit=8&clientId=${encodeURIComponent(clientId)}`)
       if (!response.ok) throw new Error('Could not reach the calculator API.')
       const data: Entry[] = await response.json(); setHistory(data); setStorageReady(true)
     } catch {
@@ -43,7 +51,7 @@ export default function App() {
     if (operation === 'divide' && b === 0) { setError('A number cannot be divided by zero.'); return }
     setBusy(true)
     try {
-      const response = await fetch(`${api}/api/calculations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ left: a, right: b, operation }) })
+      const response = await fetch(`${api}/api/calculations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ left: a, right: b, operation, clientId }) })
       if (response.ok) {
         const entry: Entry = await response.json(); setResult(entry.result); setHistory(items => [entry, ...items.filter(i => i.id !== entry.id)].slice(0, 8)); setStorageReady(true)
       } else {
@@ -54,7 +62,6 @@ export default function App() {
       const value = operation === 'add' ? a + b : operation === 'subtract' ? a - b : operation === 'multiply' ? a * b : operation === 'divide' ? a / b : a * b / 100
       const entry: Entry = { id: crypto.randomUUID(), left: a, right: b, operation, result: value, createdAt: new Date().toISOString() }
       setStorageReady(false); setResult(value); setHistory(items => { const next = [entry, ...items].slice(0, 8); localStorage.setItem('calculator-history', JSON.stringify(next)); return next })
-      setStorageReady(false)
     } finally { setBusy(false) }
   }
 
