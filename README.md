@@ -28,3 +28,12 @@ The Vite preview works without the API and saves a temporary history in browser 
 - `FRONTEND_ORIGIN`: allowed browser origin for API CORS.
 
 The database credential belongs only on the API host. Do not put it in React environment variables or commit it.
+
+## Deploy the full app with Docker
+
+The repository root contains a multi-stage `Dockerfile` that builds the React client, publishes the .NET 10 API, and serves both from one ASP.NET Core service. This lets the calculator use the API on the same origin instead of relying on browser-only history.
+
+For Railway, deploy this repository from GitHub and use the repository root as the service root so it finds `Dockerfile`. Add `SUPABASE_DB_CONNECTION` as a Railway service variable, then run `database/migrations/001_calculation_history.sql` in the Supabase SQL Editor. The secret must stay in the host's server-side variables and must not be committed. The app serves `/api/health` for a health check.
+
+The existing GitHub Pages URL is a static frontend preview; it cannot host the .NET API. Use the Railway deployment URL to run the full app with database-backed history.
+
