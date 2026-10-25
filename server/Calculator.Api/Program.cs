@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 1229)
+Total output lines: 86
+
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +13,8 @@ if (!string.IsNullOrWhiteSpace(connectionString))
     builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 
 var app = builder.Build();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseCors();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", databaseConfigured = !string.IsNullOrWhiteSpace(connectionString) }));
 
@@ -37,9 +42,7 @@ app.MapPost("/api/calculations", async (CalculationRequest request, IServiceProv
         return Results.BadRequest(new { message = operation == "divide" ? "Division by zero is not allowed." : "The result is outside the calculator's supported range." });
 
     if (services.GetService<NpgsqlDataSource>() is not { } dataSource)
-        return Results.Problem("Database is not configured. Set SUPABASE_DB_CONNECTION on the API server.", statusCode: StatusCodes.Status503ServiceUnavailable);
-
-    await using var command = dataSource.CreateCommand("""
+        return Results.Problem("Database is not configured. S…29 tokens truncated… using var command = dataSource.CreateCommand("""
         INSERT INTO public.calculation_history (client_id, left_value, operation, right_value, result)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id, left_value, operation, right_value, result, created_at;
@@ -76,7 +79,9 @@ app.MapGet("/api/calculations", async (int? limit, Guid clientId, IServiceProvid
     return Results.Ok(entries);
 });
 
+app.MapFallbackToFile("index.html");
 app.Run();
 
 record CalculationRequest(double Left, double Right, string Operation, Guid ClientId);
 record CalculationEntry(Guid Id, double Left, string Operation, double Right, double Result, DateTime CreatedAt);
+
